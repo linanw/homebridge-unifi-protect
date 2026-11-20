@@ -11,3 +11,7 @@
 
 # Exclude these.
 dist/**/*.d.ts.map
+
+!matter/
+!matter/*.mjs
+!matter/LICENSE

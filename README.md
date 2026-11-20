@@ -125,3 +125,9 @@ This is mostly of interest to the true developer nerds amongst us.
 [![Dependencies](https://img.shields.io/librariesio/release/npm/homebridge-unifi-protect?color=%230559C9&logo=dependabot&style=for-the-badge)](https://libraries.io/npm/homebridge-unifi-protect)
 [![GitHub commits since latest release (by SemVer)](https://img.shields.io/github/commits-since/hjdhjd/homebridge-unifi-protect/latest?color=%230559C9&logo=github&sort=semver&style=for-the-badge)](https://github.com/hjdhjd/homebridge-unifi-protect/commits/main)
 <!-- DEV BADGES:END -->
+
+## Matter cameras (linanw fork)
+
+The `codex/matter-cameras` branch adds bridged Matter camera endpoints to the existing UniFi Protect platform. Enable Matter on its Homebridge child bridge and pair that bridge with a camera-capable Matter controller. Homebridge supplies the Matter SDK. The existing Protect controller credentials, device selection and HomeKit accessories are reused.
+
+For a local package, run `npm ci`, `npm run build`, and `npm pack`. Install the resulting tarball in the Homebridge instance. The media adapter uses the plugin's FFmpeg binary for H.264 WebRTC and requests JPEG snapshots from Protect. Camera pan/tilt and two-way talk are outside this implementation.

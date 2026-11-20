@@ -7,7 +7,13 @@ import type { API } from "homebridge";
 import { ProtectPlatform } from "./platform.ts";
 
 // Register our platform with homebridge.
-export default (api: API): void => {
+export default async (api: API): Promise<void> => {
 
   api.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, ProtectPlatform);
+  if(api.matter) {
+
+    const { configureCameraTransport } = await import("../matter/network.mjs");
+
+    await configureCameraTransport(api.user.configPath());
+  }
 };

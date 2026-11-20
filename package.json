@@ -1,20 +1,20 @@
 {
   "name": "homebridge-unifi-protect",
-  "version": "8.2.2",
+  "version": "8.2.2-matter.1",
   "displayName": "UniFi Protect",
   "description": "Homebridge UniFi Protect plugin providing complete HomeKit integration for the entire UniFi Protect ecosystem with full support for most features including HomeKit Secure Video, multiple controllers, blazing fast performance, and much more.",
   "author": {
     "name": "HJD",
     "url": "https://github.com/hjdhjd"
   },
-  "homepage": "https://github.com/hjdhjd/homebridge-unifi-protect#readme",
+  "homepage": "https://github.com/linanw/homebridge-unifi-protect#readme",
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "git://github.com/hjdhjd/homebridge-unifi-protect.git"
+    "url": "git+https://github.com/linanw/homebridge-unifi-protect.git"
   },
   "bugs": {
-    "url": "http://github.com/hjdhjd/homebridge-unifi-protect/issues"
+    "url": "https://github.com/linanw/homebridge-unifi-protect/issues"
   },
   "type": "module",
   "engines": {
@@ -65,7 +65,8 @@
     "g4 pro",
     "g5 pro",
     "g6 instant",
-    "rtsp"
+    "rtsp",
+    "supports-matter"
   ],
   "scripts": {
     "prebuild": "npm run clean && npm run build-ui",
@@ -80,6 +81,7 @@
     "prepublishOnly": "npm run lint && npm run typecheck && npm run build",
     "test": "node --test --experimental-test-coverage --test-timeout=15000 \"src/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
+    "test:matter": "node --test test/matter-camera.test.mjs",
     "test:watch": "node --test --watch \"src/**/*.test.ts\""
   },
   "main": "dist/index.js",
@@ -87,7 +89,9 @@
     "@homebridge/plugin-ui-utils": "2.3.0",
     "ffmpeg-for-homebridge": "2.2.2",
     "homebridge-plugin-utils": "2.8.0",
-    "unifi-protect": "5.4.2"
+    "import-meta-resolve": "4.2.0",
+    "unifi-protect": "5.4.2",
+    "werift": "0.25.1"
   },
   "devDependencies": {
     "@stylistic/eslint-plugin": "6.0.0",

@@ -294,6 +294,19 @@ export class ProtectPlatform implements DynamicPlatformPlugin {
 
     this._codecSupport = codecs;
 
+    if(this.api.matter) {
+
+      try {
+
+        const { startMatterCameras } = await import("../matter/bridge.mjs");
+
+        startMatterCameras(this.api, this.controllers, this.config.videoProcessor, this.log);
+      } catch(error) {
+
+        this.log.error("Unable to load Matter cameras: %s", formatErrorMessage(error));
+      }
+    }
+
     // Iterate through all our controllers and startup.
     for(const controller of this.controllers) {
 
