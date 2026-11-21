@@ -2,6 +2,7 @@
 import { resolve } from 'import-meta-resolve';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
+import { MATTER_SNAPSHOT_MAX_BYTES } from './media.mjs';
 
 // Behaviors must share the Homebridge host's Matter runtime and its session/transaction types.
 const host = pathToFileURL(createRequire(import.meta.url).resolve('homebridge')).href;
@@ -339,7 +340,7 @@ export function cameraAccessory(camera, UUID, media) {
       try {
         const result = await media.snapshot({ width: Math.min(width, requestedResolution.width),
           height: Math.min(height, requestedResolution.height) });
-        if (!result?.data?.length || result.data.length > 1000000 || !result.width || !result.height
+        if (!result?.data?.length || result.data.length > MATTER_SNAPSHOT_MAX_BYTES || !result.width || !result.height
           || result.width > Math.min(width, requestedResolution.width) || result.height > Math.min(height, requestedResolution.height))
           reject(Status.Failure, 'Snapshot unavailable');
         return { data: result.data, imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg,

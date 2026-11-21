@@ -9,6 +9,9 @@ const integer = (value, fallback, min, max) => Number.isInteger(value) && value 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const timer = (callback, ms) => { const value = setTimeout(callback, ms); value.unref(); return value; };
 const isRtp = bytes => Buffer.isBuffer(bytes) && bytes.length >= 12 && bytes.length <= 2048 && (bytes[0] >> 6) === 2;
+// The current Matter secure session encrypts at most 65,535 bytes in one message.
+// Reserve space for the exchange header and the CaptureSnapshotResponse TLV.
+export const MATTER_SNAPSHOT_MAX_BYTES = 63 * 1024;
 const exceptionTypes = new Set(['Error', 'TypeError', 'RangeError', 'OperationError', 'InvalidStateError', 'InvalidModificationError', 'InvalidAccessError', 'NotSupportedError', 'SyntaxError', 'AbortError']);
 function sdp(value) {
   if (typeof value !== 'string' || value.length > 65536 || !value.startsWith('v=0') || !value.includes('a=fingerprint:') || !value.includes('a=ice-ufrag:')) throw fault('invalid_sdp');
@@ -33,6 +36,23 @@ function jpegSize(data) {
     offset += length;
   }
   throw fault('snapshot_invalid');
+}
+
+function encodeSnapshot(ffmpegPath, data, width, height, quality, signal) {
+  return new Promise((resolve, reject) => {
+    const child = execFile(ffmpegPath, ['-hide_banner', '-loglevel', 'error', '-f', 'mjpeg', '-i', 'pipe:0',
+      '-vf', `scale=${width}:${height}`, '-frames:v', '1', '-threads', '1', '-pix_fmt', 'yuvj420p',
+      '-q:v', String(quality), '-c:v', 'mjpeg', '-f', 'image2pipe', 'pipe:1'],
+      {encoding: 'buffer', signal, maxBuffer: MATTER_SNAPSHOT_MAX_BYTES}, (error, stdout) => {
+        if (error?.code === 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER' && stdout.length === MATTER_SNAPSHOT_MAX_BYTES) resolve(null);
+        else if (error) reject(error);
+        else resolve(stdout);
+      });
+    // FFmpeg may close stdin early after one frame or when maxBuffer terminates
+    // the attempt. The execFile callback owns the result and process errors.
+    child.stdin.on('error', () => {});
+    child.stdin.end(data);
+  });
 }
 function codecConfig() {
   return { video: [new RTCRtpCodecParameters({ mimeType: 'video/H264', clockRate: 90000, payloadType: 96,
@@ -333,17 +353,18 @@ export class MatterMedia {
     if (!data) data = await this.camera.snapshotFromController({width, height, signal: AbortSignal.timeout(6000)});
     if (!Buffer.isBuffer(data) || data.length > 8 * 1024 * 1024) throw fault('snapshot_invalid');
     const size = jpegSize(data);
-    if (size.width > width || size.height > height || data.length > 1000000) {
-      data = await new Promise((resolve, reject) => {
-        const child = execFile(this.ffmpegPath, ['-hide_banner', '-loglevel', 'error', '-i', 'pipe:0',
-          '-vf', `scale=${width}:${height}:force_original_aspect_ratio=decrease`, '-frames:v', '1',
-          '-threads', '1', '-f', 'image2pipe', '-c:v', 'mjpeg', 'pipe:1'],
-          {encoding: 'buffer', timeout: 6000, maxBuffer: 1000000}, (error, stdout) => error ? reject(error) : resolve(stdout));
-        child.stdin.on('error', reject);
-        child.stdin.end(data);
-      });
+    const fit = Math.min(1, width / size.width, height / size.height);
+    if (fit === 1 && data.length <= MATTER_SNAPSHOT_MAX_BYTES) return { data, ...size };
+    const signal = AbortSignal.timeout(6000);
+    // Re-encode the same captured frame. Preserve resolution while adjusting JPEG
+    // quality first; smaller frames give detailed scenes a bounded fallback.
+    for (const [scale, quality] of [[1, 4], [1, 9], [1, 16], [0.5, 9], [0.25, 12]]) {
+      const targetWidth = Math.max(1, Math.round(size.width * fit * scale));
+      const targetHeight = Math.max(1, Math.round(size.height * fit * scale));
+      const encoded = await encodeSnapshot(this.ffmpegPath, data, targetWidth, targetHeight, quality, signal);
+      if (encoded) return { data: encoded, ...jpegSize(encoded) };
     }
-    return { data, ...jpegSize(data) };
+    throw fault('snapshot_too_large');
   }
   async closeSession(id, expected) {
     const session = this.sessions.get(String(id)); if (!session || session.closed || (expected && session !== expected)) return;

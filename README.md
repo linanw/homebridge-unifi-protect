@@ -18,6 +18,12 @@
 
 `homebridge-unifi-protect` is a [Homebridge](https://homebridge.io) plugin that provides HomeKit support to the [UniFi Protect](https://ui.com/camera-security) device ecosystem. [UniFi Protect](https://ui.com/camera-security) is [Ubiquiti's](https://www.ui.com) video security platform, with rich camera, doorbell, and NVR controller hardware options for you to choose from, as well as an app which you can use to view, configure and manage your video camera and doorbells.
 
+## Matter camera fork
+
+The public Matter fork is `@linanw/homebridge-unifi-protect`, based on upstream 8.2.2. Version `8.2.2-matter.2` bounds inline Matter JPEGs to 63 KiB before encryption. It preserves frames that already fit, then tries progressively lower JPEG quality at the requested size before reducing resolution. The response reports the dimensions of the returned image.
+
+For an existing installation of `homebridge-unifi-protect@8.2.2-matter.1`, replace the installed plugin in its existing directory. For an npm-managed installation, the dependency can use the legacy key `homebridge-unifi-protect` with the value `npm:@linanw/homebridge-unifi-protect@8.2.2-matter.2` or a pinned scoped tarball. Keep a copy of the previous package and dependency manifest. Keep the same child bridge configuration and cached accessories. The fork retains the original registration name and camera UUID derivation. Use a single installation for this platform. Rolling back uses the previous package at the same path and a restart of the Protect child bridge.
+
 ## <A NAME="why"></A>Why Use This Plugin For UniFi Protect Support In HomeKit?
 This plugin attempts to bridge a gap in the UniFi Protect ecosystem by providing native HomeKit support on par with what you would expect from a first-party native HomeKit solution. My north star has always been to create a plugin that *just works* with minimal required configuration by you to get up and running. All you need is the hostname or IP address of the Protect controller and local user credentials on the Protect controller. That's it. The defaults are sane and correct for the vast majority of people. For the adventurous, there are rich capabilities you can explore to enable you to further tailor your experience. All provided through an elegant webUI accessed through the Homebridge Config UI that allows you to explore all of the more sophisticated capabilities of this plugin in an approachable way.
 

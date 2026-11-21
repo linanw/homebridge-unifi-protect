@@ -10,6 +10,7 @@ import { ProtectPlatform } from "./platform.ts";
 export default async (api: API): Promise<void> => {
 
   api.registerPlatform(PLUGIN_NAME, PLATFORM_NAME, ProtectPlatform);
+
   if(api.matter) {
 
     const { configureCameraTransport } = await import("../matter/network.mjs");
